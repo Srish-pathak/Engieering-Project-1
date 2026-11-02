@@ -1,0 +1,6 @@
+{
+  "name": "Tech Spec Analyser",
+  "description": "Engineering specification linter, RFC-2119 ambiguity detector, capacity envelope analyzer, and architecture dependency auditor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

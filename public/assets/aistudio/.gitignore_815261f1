@@ -1,0 +1,18 @@
+# secrets
+.env
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# app data
+review_history.json
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
