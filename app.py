@@ -1,17 +1,18 @@
+import os
 from datetime import datetime
 
 import streamlit as st
 
-st.set_page_config(page_title="AI Code Reviewer", page_icon="🔍", layout="wide")
+st.set_page_config(page_title="Tech Spec Analyser", page_icon="🪐", layout="wide")
 
-from github_fetcher import MAX_FILES, GitHubFetchError, fetch_public_repository
+from complexity import analyze_complexity
+from github_fetcher import GitHubFetchError, fetch_public_repository
 from report import build_json_report, build_markdown_report, build_repo_markdown
-from reviewer import (
-    DEFAULT_MODEL, has_key, probe_connection, resolve_model, review_code, review_repo_files,
+from reviewer import candidate_keys, detect_provider, has_deepseek_key, probe_deepseek_connectivity, review_code, review_repo_files
+from theme import (
+    banner, finding_card, hero, inject_css, rank_badge, score_ring, stat_row, tip_card,
 )
-from utils import (
-    LANGUAGE_CONFIG, format_bug_entry, format_improvement_entry, score_color, score_label, sort_findings,
-)
+from utils import LANGUAGE_CONFIG, score_label
 
 try:
     from streamlit_ace import st_ace
@@ -23,12 +24,16 @@ SAMPLES = {
     "Python": (
         "import os, sys\n\n"
         "def total(items, discount=[]):\n"
-        "    try:\n        return sum(items) - sum(discount)\n    except:\n        pass\n\n"
-        "def run(cmd):\n    eval(cmd)\n\n"
-        'api_key = "sk_live_1234567890abcdef"\n'
+        "    try:\n"
+        "        return sum(items) - sum(discount)\n"
+        "    except:\n"
+        "        pass\n\n"
+        "def run(cmd):\n"
+        "    eval(cmd)\n\n"
+        "api_key = \"sk_live_1234567890abcdef\"\n"
         "print(total([1, 2, 3], 4, 5))\n"
     ),
-    "C++": '#include <cstring>\nint add(int a, int b) {\n    char buf[8];\n    strcpy(buf, "too long for this buffer");\n    return a+b;\n}\n',
+    "C++": "#include <cstring>\nint add(int a, int b) {\n    char buf[8];\n    strcpy(buf, \"too long for this buffer\");\n    return a+b;\n}\n",
     "Java": "public class Demo {\n    int add(int a, int b) {\n        try { return a / b; }\n        catch (Exception e) { return 0; }\n    }\n}\n",
     "JavaScript": "var count = 0;\nfunction add(a, b) {\n    if (a == b) console.log('same');\n    return a + b;\n}\ndocument.body.innerHTML = location.hash;\n",
     "JSX": "function Greeting({ name }) {\n    return <h1 dangerouslySetInnerHTML={{__html: name}} />;\n}\n",
@@ -38,176 +43,249 @@ SAMPLES = {
     "CSS": "main {\n    color: navy;\n}\n",
     "SCSS": "$primary: navy;\n\nmain {\n    color: $primary;\n}\n",
 }
+EXT_TO_LANGUAGE = {cfg["ext"]: name for name, cfg in LANGUAGE_CONFIG.items()}
+EXT_TO_LANGUAGE.update({".cc": "C++", ".cxx": "C++", ".hpp": "C++", ".h": "C++"})
 
-for key, value in {"review_result": None, "reviewed_code": "", "reviewed_language": "Python",
-                   "repo_result": None, "history": []}.items():
+DEFAULT_STATE = {
+    "review_result": None,
+    "complexity_result": None,
+    "reviewed_code": "",
+    "reviewed_language": "Python",
+    "repository_result": None,
+    "code_text": SAMPLES["Python"],
+    "editor_version": 0,
+    "language": "Python",
+    "history": [],
+    "api_key": "",
+}
+for key, value in DEFAULT_STATE.items():
     st.session_state.setdefault(key, value)
 
+inject_css()
 
-# ------------------------------------------------------------------ sidebar
+
+# ---------- callbacks (run before the script reruns, so widget state may be set) ----------
+def load_sample() -> None:
+    st.session_state.code_text = SAMPLES[st.session_state.language]
+    st.session_state.editor_version += 1
+
+
+def handle_upload() -> None:
+    uploaded = st.session_state.get("uploaded_file")
+    if uploaded is None:
+        return
+    extension = os.path.splitext(uploaded.name)[1].lower()
+    language = EXT_TO_LANGUAGE.get(extension)
+    try:
+        text = uploaded.getvalue().decode("utf-8")
+    except UnicodeDecodeError:
+        st.session_state.upload_error = "That file is not valid UTF-8 text."
+        return
+    st.session_state.upload_error = None
+    st.session_state.code_text = text
+    if language:
+        st.session_state.language = language
+    st.session_state.editor_version += 1
+
+
+def clear_results() -> None:
+    st.session_state.review_result = None
+    st.session_state.complexity_result = None
+
+
+# ---------- sidebar: just the key ----------
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.markdown("## 🔑 AI key")
     st.text_input(
-        "Gemini API key", type="password", key="api_key", placeholder="AIza...",
-        help="Free at aistudio.google.com/apikey. Kept only in this browser session.",
+        "AI API key", type="password", key="api_key", placeholder="DeepSeek sk-…  ·  Gemini AIza…  ·  Groq gsk_…",
+        label_visibility="collapsed", help="Kept only in this browser session. Never saved.",
     )
-    st.text_input("Model", value=resolve_model(None), key="model_name",
-                  help="Default {}. Change it if Google renames or retires a model.".format(DEFAULT_MODEL))
     api_key = st.session_state.api_key.strip() or None
-    model = st.session_state.model_name.strip() or None
-
-    if has_key(api_key):
-        st.success("AI review is on")
+    if has_deepseek_key(api_key):
+        providers = []
+        for key in candidate_keys(api_key):
+            name = detect_provider(key)
+            if name not in providers:
+                providers.append(name)
+        st.success("AI review is on ({})".format(" → ".join(providers)))
+        if len(providers) > 1:
+            st.caption("If the first provider fails, the next one is used automatically.")
         if st.button("Test connection", use_container_width=True):
-            probe = probe_connection(api_key, model)
+            probe = probe_deepseek_connectivity(api_key)
             if probe["connected"]:
-                st.success("Connected ({})".format(probe["model"]))
+                st.success("Connected to {} ({})".format(probe["provider"], probe["model"]))
             else:
                 st.error(probe["error"])
     else:
-        st.info("No key yet. Offline checks still work. Get a free key at aistudio.google.com/apikey.")
-    st.caption("Source code is sent to Google Gemini when AI review is on. Free-tier prompts may be used by Google to improve its products.")
+        st.info("No key yet. You still get offline checks. Paste a key to turn on AI review.")
+    with st.expander("🆓 Get a free key (no card)"):
+        st.markdown(
+            "**Google Gemini** (recommended)  \n"
+            "[aistudio.google.com/apikey](https://aistudio.google.com/apikey) · key starts with `AIza`\n\n"
+            "**Groq** (fast)  \n"
+            "[console.groq.com/keys](https://console.groq.com/keys) · key starts with `gsk_`\n\n"
+            "**DeepSeek** needs paid credit.\n\n"
+            "On Streamlit Cloud you can also add `GEMINI_API_KEY` under *Settings → Secrets* "
+            "so visitors don't need their own key."
+        )
 
-st.title("🔍 AI Code Reviewer")
-st.caption("Paste code or analyse a public GitHub repository: bugs, improvements, complexity and a score.")
+hero("TECH SPEC ANALYSER", "Paste code, get bugs, fixes and a score")
 
-tab_code, tab_repo = st.tabs(["📝 Check my code", "🐙 Analyse a GitHub repo"])
-
-
-# ------------------------------------------------------------------ shared renderer
-def render_review(result: dict, code: str, language: str, key: str) -> None:
-    """Show one file's review. ``key`` keeps widget ids unique across files."""
-    status = result.get("analysis_status", {}).get("ai", "unknown")
-    if status != "completed":
-        label = {"skipped": "AI review was skipped. Showing offline checks only."}.get(
-            status, result.get("ai_error") or "AI review did not run. Showing offline checks only.")
-        st.warning(label)
-    elif result.get("summary"):
-        st.info(result["summary"])
-
-    bugs = sort_findings(result.get("bugs", []))
-    improvements = [i for i in result.get("improvements", []) if isinstance(i, dict)]
-    score = result.get("overall_score")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Score", "{}/10".format(round(score, 1)) if status == "completed" and score is not None else "—")
-    c2.metric("Issues", len(bugs))
-    c3.metric("Suggestions", len(improvements))
-
-    t_bugs, t_fix, t_cx, t_diff = st.tabs(["🐛 Issues", "💡 Improvements", "⚙️ Complexity", "🔀 Before / After"])
-    with t_bugs:
-        if not bugs:
-            st.success("No issues found. ✅")
-        for bug in bugs:
-            st.markdown(format_bug_entry(bug))
-    with t_fix:
-        if not improvements:
-            st.info("No suggestions yet." if status == "completed" else "Suggestions need the AI review.")
-        for item in improvements:
-            st.markdown(format_improvement_entry(item))
-    with t_cx:
-        cx = result.get("complexity")
-        if cx:
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Method", cx["method"].title())
-            m2.metric("Avg. complexity", cx["average_complexity"])
-            m3.metric("Rating", cx["rating"])
-            if cx.get("maintainability_index") is not None:
-                st.metric("Maintainability index", cx["maintainability_index"])
-            if cx.get("details"):
-                st.table(cx["details"])
-            if cx.get("error"):
-                st.warning(cx["error"])
-        if result.get("complexity_notes"):
-            st.caption(result["complexity_notes"])
-        if status == "completed":
-            st.markdown("**Health:** {}/10 — {}".format(round(score, 1), score_label(score)))
-            st.progress(min(max(score / 10, 0.0), 1.0))
-            {"green": st.success, "orange": st.warning, "red": st.error}[score_color(score)](
-                {"green": "This code is in great shape!", "orange": "Decent, but there is room to improve.",
-                 "red": "This code needs significant work."}[score_color(score)])
-    with t_diff:
-        improved = result.get("improved_code", "")
-        if improved:
-            left, right = st.columns(2)
-            left.markdown("**Original**")
-            left.code(code, language=language.lower())
-            right.markdown("**AI-improved**")
-            right.code(improved, language=language.lower())
-        else:
-            st.info("No improved version was returned.")
+SEVERITY_ORDER = {"critical": 0, "high": 1, "warning": 2, "medium": 3, "low": 4, "info": 5}
 
 
-# ------------------------------------------------------------------ single code tab
-with tab_code:
-    top_left, top_right, _ = st.columns([1.5, 1.2, 4])
-    language = top_left.selectbox("Language", list(LANGUAGE_CONFIG.keys()), label_visibility="collapsed")
-    use_sample = top_right.button("Load sample", use_container_width=True)
-    st.session_state.setdefault("editor_nonce", 0)
-    if use_sample:
-        st.session_state.editor_nonce += 1
+def sort_findings(items):
+    return sorted(items, key=lambda b: SEVERITY_ORDER.get(str(b.get("severity", "info")).lower(), 5))
 
-    editor_key = "editor_{}_{}".format(language, st.session_state.editor_nonce)
+
+tab_scan, tab_repo = st.tabs(["Check my code", "Check a GitHub repo"])
+
+
+# ====================================================================== scanner
+with tab_scan:
+    pick_col, sample_col, _ = st.columns([1.2, 1.2, 3])
+    language = pick_col.selectbox("Language", list(LANGUAGE_CONFIG.keys()), key="language", label_visibility="collapsed")
+    sample_col.button("Load sample", on_click=load_sample, use_container_width=True)
+
     if HAS_ACE:
-        code_input = st_ace(value=SAMPLES[language], language=LANGUAGE_CONFIG[language]["ace_mode"],
-                            theme="tomorrow_night", font_size=14, height=300, key=editor_key)
+        code_input = st_ace(
+            value=st.session_state.code_text,
+            language=LANGUAGE_CONFIG[language]["ace_mode"],
+            theme="tomorrow_night",
+            font_size=14,
+            height=300,
+            key="editor_{}_{}".format(language, st.session_state.editor_version),
+        )
     else:
-        code_input = st.text_area("Source code", value=SAMPLES[language], height=300, key=editor_key,
-                                  label_visibility="collapsed")
+        code_input = st.text_area(
+            "Source code", value=st.session_state.code_text, height=300,
+            key="textarea_{}".format(st.session_state.editor_version), label_visibility="collapsed",
+        )
+    if code_input is not None:
+        st.session_state.code_text = code_input
 
-    if st.button("Review My Code", type="primary"):
-        if not code_input or not code_input.strip():
-            st.warning("Please paste some code first.")
+    with st.expander("Or upload a file"):
+        st.file_uploader(
+            "Upload a source file", type=[e.lstrip(".") for e in EXT_TO_LANGUAGE],
+            key="uploaded_file", on_change=handle_upload, label_visibility="collapsed",
+        )
+        if st.session_state.get("upload_error"):
+            st.error(st.session_state.upload_error)
+
+    run_clicked = st.button("Review My Code", type="primary")
+
+    if run_clicked:
+        source = st.session_state.code_text
+        if not source or not source.strip():
+            st.warning("Add some code first.")
         else:
             with st.spinner("Reviewing your code..."):
-                result = review_code(code_input, language, "<input>", api_key, model)
-            st.session_state.review_result = result
-            st.session_state.reviewed_code = code_input
-            st.session_state.reviewed_language = language
+                result = review_code(source, language, "<input>", api_key)
+                st.session_state.review_result = result
+                st.session_state.reviewed_code = source
+                st.session_state.reviewed_language = language
+                st.session_state.complexity_result = (
+                    analyze_complexity(source, language) if LANGUAGE_CONFIG[language]["supports_radon"] else None
+                )
             st.session_state.history.append({
-                "time": datetime.now().strftime("%H:%M:%S"), "language": language,
-                "issues": len(result.get("bugs", [])), "result": result, "code": code_input,
+                "language": language,
+                "findings": len(result.get("bugs", [])),
+                "score": result.get("overall_score") if result.get("analysis_status", {}).get("ai") == "completed" else None,
+                "time": datetime.now().strftime("%H:%M:%S"),
+                "result": result,
+                "complexity": st.session_state.complexity_result,
+                "code": source,
             })
 
     result = st.session_state.review_result
-    if result:
-        st.markdown("---")
-        reviewed_language = st.session_state.reviewed_language
-        render_review(result, st.session_state.reviewed_code, reviewed_language, "single")
-        d1, d2 = st.columns(2)
-        d1.download_button("Download report (.md)",
-                           build_markdown_report(result, reviewed_language, st.session_state.reviewed_code),
-                           file_name="code_review.md", mime="text/markdown", use_container_width=True)
-        d2.download_button("Download data (.json)", build_json_report(result),
-                           file_name="code_review.json", mime="application/json", use_container_width=True)
+    complexity = st.session_state.complexity_result
 
-        history = st.session_state.history
-        if len(history) > 1:
-            with st.expander("Past reviews this session"):
-                labels = ["{} · {} · {} issues".format(h["time"], h["language"], h["issues"]) for h in history]
+    if result:
+        ai_status = result.get("analysis_status", {}).get("ai", "unknown")
+        ai_ok = ai_status == "completed"
+        bugs = sort_findings([b for b in result.get("bugs", []) if isinstance(b, dict)])
+        improvements = [i for i in result.get("improvements", []) if isinstance(i, dict)]
+        score = result.get("overall_score", 0)
+        reviewed_language = st.session_state.reviewed_language
+
+        st.markdown("---")
+        if ai_ok and result.get("summary"):
+            banner(result["summary"], "info")
+            if result.get("ai_provider"):
+                st.caption("Reviewed by {}".format(result["ai_provider"]))
+        elif not ai_ok:
+            banner("AI review is off ({}). Showing offline checks only. Add your DeepSeek key in the sidebar for the full review.".format(
+                ai_status.replace("_", " ")), "warn")
+        stat_row([
+            ("Score", "{}/10".format(round(score, 1)) if ai_ok else "—", score_label(score) if ai_ok else "needs AI", "#34d399"),
+            ("Issues", len(bugs), "found", "#fb7185"),
+            ("Suggestions", len(improvements), "to improve", "#8b5cf6"),
+        ])
+        st.markdown("")
+
+        t_issues, t_fixes, t_more = st.tabs(["Issues", "Fixes", "More"])
+
+        with t_issues:
+            if not bugs:
+                banner("No issues found. ✅", "ok")
+            for bug in bugs:
+                st.markdown(finding_card(bug), unsafe_allow_html=True)
+
+        with t_fixes:
+            for tip in improvements:
+                st.markdown(tip_card(tip), unsafe_allow_html=True)
+            improved = result.get("improved_code", "")
+            if improved:
+                st.markdown("**Improved code**")
+                st.code(improved, language=reviewed_language.lower())
+            elif not improvements:
+                banner("No fixes to suggest yet." if ai_ok else "Fixes need AI review. Add your key in the sidebar.", "info")
+
+        with t_more:
+            if complexity and not complexity.get("error") and complexity.get("details"):
+                st.markdown("**Complexity**  ·  maintainability {}".format(complexity.get("maintainability_index", "N/A")))
+                rows = "".join(
+                    "<tr><td style='padding:.3rem .8rem'><code>{}</code></td><td style='padding:.3rem .8rem'>{}</td>"
+                    "<td style='padding:.3rem .8rem'>{}</td></tr>".format(
+                        d["name"].replace("<", "&lt;"), d["complexity"], rank_badge(d["rank"]))
+                    for d in complexity["details"]
+                )
+                st.markdown("<div class='panel'><table style='width:100%'>{}</table></div>".format(rows), unsafe_allow_html=True)
+            if ai_ok:
+                st.markdown(score_ring(score, score_label(score)), unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            c1.download_button(
+                "Download report (.md)",
+                build_markdown_report(result, complexity, reviewed_language, st.session_state.reviewed_code),
+                file_name="tech_spec_analyser_report.md", mime="text/markdown", use_container_width=True,
+            )
+            c2.download_button(
+                "Download data (.json)", build_json_report(result, complexity),
+                file_name="tech_spec_analyser_report.json", mime="application/json", use_container_width=True,
+            )
+            history = st.session_state.history
+            if len(history) > 1:
+                st.markdown("**Past reviews**")
+                labels = ["{} · {} · {} issues".format(h["time"], h["language"], h["findings"]) for h in history]
                 pick = st.selectbox("Past reviews", labels, index=len(labels) - 1, label_visibility="collapsed")
                 if st.button("Open this review"):
                     entry = history[labels.index(pick)]
                     st.session_state.review_result = entry["result"]
+                    st.session_state.complexity_result = entry["complexity"]
                     st.session_state.reviewed_code = entry["code"]
                     st.session_state.reviewed_language = entry["language"]
                     st.rerun()
 
 
-# ------------------------------------------------------------------ GitHub tab
+# ====================================================================== repository
 with tab_repo:
-    url_col, btn_col = st.columns([4, 1.4])
+    url_col, btn_col = st.columns([4, 1.3])
     repository_url = url_col.text_input(
-        "Public repository URL", placeholder="https://github.com/owner/repository",
-        key="repository_url", label_visibility="collapsed")
-    analyze_clicked = btn_col.button("Analyse repository", type="primary", use_container_width=True)
-
-    opt1, opt2 = st.columns(2)
-    use_ai = opt1.checkbox("Use Gemini AI for each file", value=has_key(api_key),
-                           help="Off = fast offline checks only (no API quota used).")
-    max_files = opt2.slider("Max files to review", 1, MAX_FILES, 8,
-                            help="Free Gemini keys allow only a few requests per minute, so start small.")
-    st.caption("Public repos only. Python files are reviewed first. GitHub allows 60 unauthenticated requests/hour, "
-               "and each file costs one request.")
+        "Public repository URL", placeholder="https://github.com/owner/repository", key="repository_url",
+        label_visibility="collapsed",
+    )
+    analyze_clicked = btn_col.button("Analyze Repository", type="primary", use_container_width=True)
+    st.caption("Public repos only, up to 30 files. Code is sent to DeepSeek when a key is set.")
 
     if analyze_clicked:
         if not repository_url.strip():
@@ -215,76 +293,76 @@ with tab_repo:
         else:
             try:
                 with st.spinner("Fetching files from GitHub..."):
-                    repo_data = fetch_public_repository(repository_url, max_files)
-                if not repo_data["files"]:
-                    st.session_state.repo_result = None
+                    repository_data = fetch_public_repository(repository_url)
+                if not repository_data["files"]:
+                    st.session_state.repository_result = None
                     st.warning("No supported source files were found in this repository.")
                 else:
                     progress = st.progress(0.0, text="Starting...")
 
-                    def on_progress(done, total, path):
-                        progress.progress(done / total, text="Reviewed {}/{} · {}".format(done, total, path))
+                    def update_progress(done, total, path):
+                        progress.progress(done / total, text="Reviewed {}/{} files · {}".format(done, total, path))
 
-                    review_data = review_repo_files(
-                        repo_data["files"], on_progress, api_key, model, use_ai=use_ai and has_key(api_key))
+                    review_data = review_repo_files(repository_data["files"], update_progress, api_key)
                     progress.empty()
-                    st.session_state.repo_result = {"repository": repo_data, "review": review_data}
+                    st.session_state.repository_result = {"repository": repository_data, "review": review_data}
             except GitHubFetchError as exc:
                 st.error(str(exc))
             except Exception as exc:
                 st.error("Repository review could not be completed: {}".format(exc))
 
-    repo_result = st.session_state.repo_result
+    repo_result = st.session_state.repository_result
     if repo_result:
-        repo, review = repo_result["repository"], repo_result["review"]
-        counts = review["severity_counts"]
+        repo = repo_result["repository"]
+        review = repo_result["review"]
         st.markdown("---")
-        st.markdown("**[{}]({})** · branch `{}`".format(repo["full_name"], repo["html_url"], repo["branch"]))
-        if repo["description"]:
-            st.caption(repo["description"])
-
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Files reviewed", "{} / {}".format(review["files_reviewed"], repo["source_files_detected"]))
-        m2.metric("Critical + High", counts["critical"] + counts["high"])
-        m3.metric("Medium + Low", counts["medium"] + counts["low"])
-        score = review["overall_score"]
-        m4.metric("Avg. AI score", "{}/10".format(score) if score is not None else "—")
-
+        st.markdown("**[{}]({})** · `{}`".format(repo["full_name"], repo["html_url"], repo["branch"]))
+        stat_row([
+            ("Files reviewed", review["files_reviewed"], "of {} found".format(repo["source_files_detected"]), "#22d3ee"),
+            ("Serious issues", review["critical_bugs"] + review["warnings"], "critical + warnings", "#fb7185"),
+            ("Quality", "{}/10".format(review["overall_score"]) if review["overall_score"] is not None else "—",
+             score_label(review["overall_score"]) if review["overall_score"] is not None else "needs AI", "#34d399"),
+        ])
+        st.markdown("")
         notes = []
-        if repo["files_limited"]:
-            notes.append("Only the first {} of {} source files were reviewed.".format(
-                review["files_reviewed"], repo["source_files_detected"]))
-        if repo["tree_truncated"]:
-            notes.append("GitHub truncated the file list for this very large repo.")
-        if repo["fetch_errors"]:
+        if repo.get("files_limited"):
+            notes.append("Only the first 30 files were reviewed.")
+        if review.get("failed_files"):
+            notes.append("{} file(s) could not be reviewed.".format(review["failed_files"]))
+        if review.get("ai_failed_files"):
+            notes.append("AI review was unavailable for {} file(s); offline checks were used.".format(review["ai_failed_files"]))
+        if repo.get("fetch_errors"):
             notes.append("{} file(s) could not be downloaded.".format(len(repo["fetch_errors"])))
-        if review["ai_stopped_reason"]:
-            notes.append("AI stopped early: {} Remaining files used offline checks.".format(review["ai_stopped_reason"]))
-        elif review["ai_failed_files"]:
-            notes.append("AI review failed for {} file(s).".format(review["ai_failed_files"]))
-        for note in notes:
-            st.warning(note)
+        if notes:
+            banner(" ".join(notes), "warn")
 
-        r_over, r_files = st.tabs(["Overview", "Files"])
-        with r_over:
-            rows = []
-            for item in review["file_results"]:
-                r = item["review"]
-                bugs = [b for b in r.get("bugs", []) if isinstance(b, dict)]
-                sc = r.get("overall_score")
-                rows.append({
-                    "File": item["path"], "Language": item["language"],
-                    "Critical/High": sum(1 for b in bugs if str(b.get("severity", "")).lower() in {"critical", "high"}),
-                    "Other": sum(1 for b in bugs if str(b.get("severity", "")).lower() not in {"critical", "high"}),
-                    "AI score": round(sc, 1) if r.get("analysis_status", {}).get("ai") == "completed" and sc is not None else None,
-                })
-            rows.sort(key=lambda row: (-row["Critical/High"], -row["Other"]))
-            st.dataframe(rows, use_container_width=True, hide_index=True)
-            st.download_button("Download repository report (.md)", build_repo_markdown(repo, review),
-                               file_name="repo_report.md", mime="text/markdown")
+        all_bugs = []
+        for file_result in review["file_results"]:
+            all_bugs += [(file_result["path"], b) for b in file_result["review"].get("bugs", []) if isinstance(b, dict)]
+        all_bugs.sort(key=lambda pb: SEVERITY_ORDER.get(str(pb[1].get("severity", "info")).lower(), 5))
+
+        r_issues, r_files = st.tabs(["Issues", "Files"])
+        with r_issues:
+            if not all_bugs:
+                banner("No issues found. ✅", "ok")
+            for path, bug in all_bugs:
+                st.markdown(finding_card(bug, path), unsafe_allow_html=True)
+            st.download_button(
+                "Download report (.md)", build_repo_markdown(repo, review),
+                file_name="tech_spec_analyser_repo_report.md", mime="text/markdown",
+            )
         with r_files:
-            for item in review["file_results"]:
-                r = item["review"]
-                issues = len([b for b in r.get("bugs", []) if isinstance(b, dict)])
-                with st.expander("{} · {} issue(s)".format(item["path"], issues)):
-                    render_review(r, item["content"], item["language"], item["path"])
+            paths = [f["path"] for f in review["file_results"]]
+            selected_path = st.selectbox("File", paths, label_visibility="collapsed")
+            selected = next(f for f in review["file_results"] if f["path"] == selected_path)
+            file_review = selected["review"]
+            st.write(file_review.get("summary") or "No summary.")
+            for bug in sort_findings([b for b in file_review.get("bugs", []) if isinstance(b, dict)]):
+                st.markdown(finding_card(bug), unsafe_allow_html=True)
+            for tip in [i for i in file_review.get("improvements", []) if isinstance(i, dict)]:
+                st.markdown(tip_card(tip), unsafe_allow_html=True)
+            with st.expander("Show source code"):
+                st.code(selected["content"], language=selected["language"].lower())
+            if file_review.get("improved_code"):
+                with st.expander("Show improved code"):
+                    st.code(file_review["improved_code"], language=selected["language"].lower())
