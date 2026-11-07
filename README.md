@@ -1,4 +1,4 @@
-# 🔍 AI Code Reviewer (with GitHub repo analysis)
+# 🔍 AI Code Reviewer
 
 Streamlit app that reviews code with offline static analysis plus **Google Gemini** (free tier works).
 Paste code, or paste a **public GitHub repository URL** and get a per-file and repo-wide report.
