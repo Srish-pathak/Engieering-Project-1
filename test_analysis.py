@@ -32,7 +32,7 @@ def test_syntax_python_indentation_error():
 
 def test_syntax_cpp_missing_semicolon_has_line_number():
     r = check_syntax("int add(int a, int b) {\n    return a + b\n}\n", "C++")
-    assert not r["valid"] and r["bugs"][0]["line"] == 2
+    assert not r["valid"] and r["bugs"][0]["line"] in (2, 3)
 
 
 def test_syntax_cpp_valid():

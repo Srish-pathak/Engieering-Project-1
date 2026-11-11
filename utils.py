@@ -6,7 +6,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-APP_NAME = "TecSpace Analyser"
+APP_NAME = "TechSpecAnalyser"
 
 LANGUAGE_CONFIG = {
     "Python": {"ace_mode": "python", "ext": ".py", "supports_radon": True},

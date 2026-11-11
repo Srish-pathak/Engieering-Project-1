@@ -1889,7 +1889,8 @@ def unified_diff(before: str, after: str, from_name: str = "original", to_name: 
 # =====================================================================
 def init_db(db_path: Path = DB_PATH) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(str(db_path)) as conn:
+    conn = sqlite3.connect(str(db_path))
+    try:
         conn.executescript(
             """
             CREATE TABLE IF NOT EXISTS projects (
@@ -1919,13 +1920,17 @@ def init_db(db_path: Path = DB_PATH) -> None:
             );
             """
         )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def save_review_run(run_record: Dict[str, Any], db_path: Path = DB_PATH) -> None:
     if os.getenv("TECSPACE_SAVE_HISTORY", "1") == "0":
         return
     init_db(db_path)
-    with sqlite3.connect(str(db_path)) as conn:
+    conn = sqlite3.connect(str(db_path))
+    try:
         conn.execute(
             """
             INSERT OR REPLACE INTO projects (project_id, name, language, input_mode, created_at)
@@ -1975,31 +1980,41 @@ def save_review_run(run_record: Dict[str, Any], db_path: Path = DB_PATH) -> None
             )
             """
         )
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def load_review_runs(db_path: Path = DB_PATH) -> List[Dict[str, Any]]:
     if os.getenv("TECSPACE_SAVE_HISTORY", "1") == "0" or not db_path.exists():
         return []
     init_db(db_path)
-    with sqlite3.connect(str(db_path)) as conn:
+    conn = sqlite3.connect(str(db_path))
+    out = []
+    try:
         rows = conn.execute(
             "SELECT payload_json FROM review_runs ORDER BY rowid DESC LIMIT 25"
         ).fetchall()
-    out = []
-    for (raw_json,) in rows:
-        try:
-            out.append(json.loads(raw_json))
-        except Exception:
-            pass
+        for (raw_json,) in rows:
+            try:
+                out.append(json.loads(raw_json))
+            except Exception:
+                pass
+    finally:
+        conn.close()
     return out
 
 
 def clear_review_runs(db_path: Path = DB_PATH) -> List[Dict[str, Any]]:
     if db_path.exists():
         init_db(db_path)
-        with sqlite3.connect(str(db_path)) as conn:
+        conn = sqlite3.connect(str(db_path))
+        try:
             conn.execute("DELETE FROM review_runs")
             conn.execute("DELETE FROM projects")
+            conn.commit()
+        finally:
+            conn.close()
     return []
 
 

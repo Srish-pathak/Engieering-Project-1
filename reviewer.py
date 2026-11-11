@@ -27,7 +27,7 @@ from utils import compute_quality_score, merge_bugs, safe_json_parse
 
 load_dotenv()  # reads GEMINI_API_KEY from a local .env file (which is git-ignored)
 
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 MAX_CODE_CHARS = 20000
 MAX_ATTEMPTS = 3
 RETRY_DELAY_SECONDS = 2  # doubled after each failed attempt

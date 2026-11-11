@@ -1,0 +1,362 @@
+[
+ {
+  "id": "20261110004949782291",
+  "time": "10 Nov 2026, 00:49",
+  "language": "Python",
+  "score": 6.0,
+  "critical": 2,
+  "warning": 0,
+  "info": 0,
+  "summary": "AI review is unavailable. Showing syntax, static and complexity results.",
+  "code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+  "result": {
+   "summary": "AI review is unavailable. Showing syntax, static and complexity results.",
+   "bugs": [
+    {
+     "line": 9,
+     "severity": "critical",
+     "description": "Call to `calculate_total(price, quantity, discount)` is wrong: missing required argument(s): quantity.",
+     "fix": "",
+     "source": "static",
+     "rule": "bad-call"
+    },
+    {
+     "line": 12,
+     "severity": "critical",
+     "description": "Name `totl` is not defined (NameError at runtime). Check for a typo.",
+     "fix": "",
+     "source": "static",
+     "rule": "undefined-name"
+    }
+   ],
+   "improvements": [],
+   "complexity_notes": "",
+   "improved_code": "",
+   "improved_code_valid": null,
+   "improved_code_issues": [],
+   "overall_score": 6.0,
+   "ai_score": null,
+   "score_details": {
+    "score": 6.0,
+    "rule_score": 6.0,
+    "ai_score": null,
+    "penalties": [
+     {
+      "label": "2 critical bug(s)",
+      "points": 4.0
+     }
+    ]
+   },
+   "ai_status": "failed",
+   "ai_error": "Model `gemini-2.5-flash` was not found. Run `python test.py` to list valid models, then set GEMINI_MODEL in .env.",
+   "reviewed_code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+   "language": "Python",
+   "model": null,
+   "checker": "python compiler",
+   "error": false
+  },
+  "complexity": {
+   "method": "radon",
+   "analysis_type": "measured",
+   "average_complexity": 1.0,
+   "max_complexity": 1,
+   "rating": "A",
+   "rating_label": "Simple, low risk",
+   "details": [
+    {
+     "name": "calculate_total",
+     "line": 1,
+     "complexity": 1,
+     "rank": "A"
+    },
+    {
+     "name": "average",
+     "line": 5,
+     "complexity": 1,
+     "rank": "A"
+    }
+   ],
+   "maintainability_index": 69.98,
+   "mi_rank": "A",
+   "mi_label": "Highly maintainable",
+   "lines": {
+    "Total lines": 12,
+    "Code lines": 8,
+    "Comment lines": 0,
+    "Blank lines": 4
+   },
+   "note": "Measured with radon. Cyclomatic complexity and the Maintainability Index (0-100, higher is better) are exact calculations, not estimates.",
+   "error": null
+  }
+ },
+ {
+  "id": "20261110003951536596",
+  "time": "10 Nov 2026, 00:39",
+  "language": "Python",
+  "score": 6.0,
+  "critical": 2,
+  "warning": 0,
+  "info": 0,
+  "summary": "AI review is unavailable. Showing syntax, static and complexity results.",
+  "code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+  "result": {
+   "summary": "AI review is unavailable. Showing syntax, static and complexity results.",
+   "bugs": [
+    {
+     "line": 9,
+     "severity": "critical",
+     "description": "Call to `calculate_total(price, quantity, discount)` is wrong: missing required argument(s): quantity.",
+     "fix": "",
+     "source": "static",
+     "rule": "bad-call"
+    },
+    {
+     "line": 12,
+     "severity": "critical",
+     "description": "Name `totl` is not defined (NameError at runtime). Check for a typo.",
+     "fix": "",
+     "source": "static",
+     "rule": "undefined-name"
+    }
+   ],
+   "improvements": [],
+   "complexity_notes": "",
+   "improved_code": "",
+   "improved_code_valid": null,
+   "improved_code_issues": [],
+   "overall_score": 6.0,
+   "ai_score": null,
+   "score_details": {
+    "score": 6.0,
+    "rule_score": 6.0,
+    "ai_score": null,
+    "penalties": [
+     {
+      "label": "2 critical bug(s)",
+      "points": 4.0
+     }
+    ]
+   },
+   "ai_status": "failed",
+   "ai_error": "Gemini rejected the API key. Check GEMINI_API_KEY in your .env file.",
+   "reviewed_code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+   "language": "Python",
+   "model": null,
+   "checker": "python compiler",
+   "error": false
+  },
+  "complexity": {
+   "method": "radon",
+   "analysis_type": "measured",
+   "average_complexity": 1.0,
+   "max_complexity": 1,
+   "rating": "A",
+   "rating_label": "Simple, low risk",
+   "details": [
+    {
+     "name": "calculate_total",
+     "line": 1,
+     "complexity": 1,
+     "rank": "A"
+    },
+    {
+     "name": "average",
+     "line": 5,
+     "complexity": 1,
+     "rank": "A"
+    }
+   ],
+   "maintainability_index": 69.98,
+   "mi_rank": "A",
+   "mi_label": "Highly maintainable",
+   "lines": {
+    "Total lines": 12,
+    "Code lines": 8,
+    "Comment lines": 0,
+    "Blank lines": 4
+   },
+   "note": "Measured with radon. Cyclomatic complexity and the Maintainability Index (0-100, higher is better) are exact calculations, not estimates.",
+   "error": null
+  }
+ },
+ {
+  "id": "20261110002626470687",
+  "time": "10 Nov 2026, 00:26",
+  "language": "Python",
+  "score": 6.0,
+  "critical": 2,
+  "warning": 0,
+  "info": 0,
+  "summary": "AI review is unavailable. Showing syntax, static and complexity results.",
+  "code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+  "result": {
+   "summary": "AI review is unavailable. Showing syntax, static and complexity results.",
+   "bugs": [
+    {
+     "line": 9,
+     "severity": "critical",
+     "description": "Call to `calculate_total(price, quantity, discount)` is wrong: missing required argument(s): quantity.",
+     "fix": "",
+     "source": "static",
+     "rule": "bad-call"
+    },
+    {
+     "line": 12,
+     "severity": "critical",
+     "description": "Name `totl` is not defined (NameError at runtime). Check for a typo.",
+     "fix": "",
+     "source": "static",
+     "rule": "undefined-name"
+    }
+   ],
+   "improvements": [],
+   "complexity_notes": "",
+   "improved_code": "",
+   "improved_code_valid": null,
+   "improved_code_issues": [],
+   "overall_score": 6.0,
+   "ai_score": null,
+   "score_details": {
+    "score": 6.0,
+    "rule_score": 6.0,
+    "ai_score": null,
+    "penalties": [
+     {
+      "label": "2 critical bug(s)",
+      "points": 4.0
+     }
+    ]
+   },
+   "ai_status": "failed",
+   "ai_error": "Model `gemini-2.5-flash` was not found. Run `python test.py` to list valid models, then set GEMINI_MODEL in .env.",
+   "reviewed_code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+   "language": "Python",
+   "model": null,
+   "checker": "python compiler",
+   "error": false
+  },
+  "complexity": {
+   "method": "radon",
+   "analysis_type": "measured",
+   "average_complexity": 1.0,
+   "max_complexity": 1,
+   "rating": "A",
+   "rating_label": "Simple, low risk",
+   "details": [
+    {
+     "name": "calculate_total",
+     "line": 1,
+     "complexity": 1,
+     "rank": "A"
+    },
+    {
+     "name": "average",
+     "line": 5,
+     "complexity": 1,
+     "rank": "A"
+    }
+   ],
+   "maintainability_index": 69.98,
+   "mi_rank": "A",
+   "mi_label": "Highly maintainable",
+   "lines": {
+    "Total lines": 12,
+    "Code lines": 8,
+    "Comment lines": 0,
+    "Blank lines": 4
+   },
+   "note": "Measured with radon. Cyclomatic complexity and the Maintainability Index (0-100, higher is better) are exact calculations, not estimates.",
+   "error": null
+  }
+ },
+ {
+  "id": "20261110002508284883",
+  "time": "10 Nov 2026, 00:25",
+  "language": "Python",
+  "score": 6.0,
+  "critical": 2,
+  "warning": 0,
+  "info": 0,
+  "summary": "AI review is switched off. Showing syntax, static and complexity results only.",
+  "code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+  "result": {
+   "summary": "AI review is switched off. Showing syntax, static and complexity results only.",
+   "bugs": [
+    {
+     "line": 9,
+     "severity": "critical",
+     "description": "Call to `calculate_total(price, quantity, discount)` is wrong: missing required argument(s): quantity.",
+     "fix": "",
+     "source": "static",
+     "rule": "bad-call"
+    },
+    {
+     "line": 12,
+     "severity": "critical",
+     "description": "Name `totl` is not defined (NameError at runtime). Check for a typo.",
+     "fix": "",
+     "source": "static",
+     "rule": "undefined-name"
+    }
+   ],
+   "improvements": [],
+   "complexity_notes": "",
+   "improved_code": "",
+   "improved_code_valid": null,
+   "improved_code_issues": [],
+   "overall_score": 6.0,
+   "ai_score": null,
+   "score_details": {
+    "score": 6.0,
+    "rule_score": 6.0,
+    "ai_score": null,
+    "penalties": [
+     {
+      "label": "2 critical bug(s)",
+      "points": 4.0
+     }
+    ]
+   },
+   "ai_status": "skipped",
+   "ai_error": null,
+   "reviewed_code": "def calculate_total(price, quantity, discount=0):\n    return price * quantity - discount\n\n\ndef average(numbers):\n    return sum(numbers) / len(numbers)\n\n\nprint(calculate_total(100))\nprint(calculate_total(100, 2, discount=5))\nprint(average([4, 8, 15]))\nprint(totl)\n",
+   "language": "Python",
+   "model": null,
+   "checker": "python compiler",
+   "error": false
+  },
+  "complexity": {
+   "method": "radon",
+   "analysis_type": "measured",
+   "average_complexity": 1.0,
+   "max_complexity": 1,
+   "rating": "A",
+   "rating_label": "Simple, low risk",
+   "details": [
+    {
+     "name": "calculate_total",
+     "line": 1,
+     "complexity": 1,
+     "rank": "A"
+    },
+    {
+     "name": "average",
+     "line": 5,
+     "complexity": 1,
+     "rank": "A"
+    }
+   ],
+   "maintainability_index": 69.98,
+   "mi_rank": "A",
+   "mi_label": "Highly maintainable",
+   "lines": {
+    "Total lines": 12,
+    "Code lines": 8,
+    "Comment lines": 0,
+    "Blank lines": 4
+   },
+   "note": "Measured with radon. Cyclomatic complexity and the Maintainability Index (0-100, higher is better) are exact calculations, not estimates.",
+   "error": null
+  }
+ }
+]
