@@ -1,5 +1,4 @@
 import { createRoot } from 'react-dom/client';
-import GitHubWorkspace from './GitHubWorkspace';
-import './index.css';
+import GalacticPortal from './GalacticPortal';
 
-createRoot(document.getElementById('root')!).render(<GitHubWorkspace />);
+createRoot(document.getElementById('root')!).render(<GalacticPortal />);
