@@ -101,7 +101,7 @@ export default function GalacticPortal() {
   function submitRepo(e:FormEvent){e.preventDefault();if(!repoUrl.trim())return;void send('/api/import-github',{repo_url:repoUrl,branch,use_ai:ai},'GitHub Review')}
   async function submitFile(e:ChangeEvent<HTMLInputElement>,zip=false){
     const chosen=e.target.files?.[0];e.target.value='';if(!chosen)return;setFile(chosen);
-    if(zip){void send('/api/upload-zip',{zip_base64:await zipBase64(chosen),project_name:chosen.name.replace(/\\.zip$/i,''),use_ai:ai},chosen.name);return}
+    if(zip){void send('/api/upload-zip',{zip_base64:await zipBase64(chosen),project_name:chosen.name.replace(/\.zip$/i,''),use_ai:ai},chosen.name);return}
     const ext=chosen.name.split('.').pop()?.toLowerCase();
     const lang:SupportedLanguage=['cpp','cc','cxx','h','hpp'].includes(ext||'')?'C++':ext==='java'?'Java':'Python';
     void send('/api/analyze',{code:await chosen.text(),language:lang,file_name:chosen.name,project_name:chosen.name,input_mode:'file',use_ai:ai},chosen.name);
@@ -114,7 +114,7 @@ export default function GalacticPortal() {
     else{
       const lines=[`# ${result.project_name||'Code Review'}`, '',result.summary||'', '',`Score: ${score??'—'}/100`, '', '## Findings'];
       findings.forEach(f=>lines.push(`- **${severity(f)} — ${f.rule||f.category||'Finding'}** (${f.file||''}${f.line?':'+f.line:''}): ${f.description||''}`,f.fix?`  - Fix: ${f.fix}`:'' ));
-      saveFile(base+'.md',lines.join('\\n'),'text/markdown');
+      saveFile(base+'.md',lines.join('\n'),'text/markdown');
     }
   }
   function FindingList({items}:{items:Finding[]}){
