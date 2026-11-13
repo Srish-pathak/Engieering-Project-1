@@ -1,285 +1,485 @@
-# TechSpecAnalyser — Advanced AI-Powered Code Intelligence & Security Platform
+# ⚡ TechSpecAnalyser
+### Don't Just Write Code. Understand It. Secure It. Improve It.
 
-> **Tagline:** *Your Intelligent AI-Powered Code Review, Security & Repository Intelligence Platform.*
+<p align="center">
+  <strong>AI-Powered Code Intelligence, Security & Repository Analysis Platform</strong><br/>
+  Intelligent Code Review · Vulnerability Detection · Repository Intelligence · AI Assistance
+</p>
 
-TechSpecAnalyser is a software engineering intelligence platform combining deterministic program analysis (Python AST, Tree-Sitter CST, Radon cyclomatic complexity, Halstead maintainability, and multi-language static security rules) with Google Gemini AI reasoning.
-
-It provides repository-level code understanding, CWE vulnerability audits, secret redactions, optimization diffs, automated GitHub push webhook monitoring, and interactive codebase chat with persistent SQLite tracking.
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Developer%20Tool-blueviolet?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/AI-Google%20Gemini-4285F4?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Frontend-Streamlit-FF4B4B?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Database-SQLite-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Testing-137%20Tests-success?style=for-the-badge" />
+</p>
 
 ---
 
-## 1. System Architecture
+## 💡 The Story Behind TechSpecAnalyser
+
+Imagine this:
+
+It's 2:00 AM. You're working on a software project. Your application has hundreds of lines of code, multiple dependencies, and several interconnected modules.
+
+Everything seems to work.
+
+But somewhere inside your code, there could be:
+
+- A hidden security vulnerability.
+- An inefficient algorithm.
+- An undefined variable.
+- A hardcoded API key.
+- A function with unnecessarily high complexity.
+- A bug waiting to appear in production.
+
+Now imagine having to manually inspect every file to find these problems.
+
+**Wouldn't it be better if your code could explain its own problems?**
+
+That's exactly the idea behind **TechSpecAnalyser!**
+
+TechSpecAnalyser is an intelligent software engineering platform that combines traditional static code analysis with Google Gemini AI to inspect source code, identify vulnerabilities, understand repositories, and suggest meaningful improvements.
+
+Our idea is simple:
+
+**Less debugging guesswork. Better code quality. Stronger software security.**
+
+---
+
+## 🎯 What Are We Trying to Achieve?
+
+TechSpecAnalyser aims to make software development more intelligent, secure, and efficient.
+
+1. **Automated Code Review:** Analyse source code and identify potential bugs and coding issues.
+2. **Multi-Language Analysis:** Support code analysis across Python, C, C++, Java, JavaScript, TypeScript, HTML and CSS.
+3. **Security Intelligence:** Detect common vulnerabilities and map them to CWE identifiers.
+4. **Repository Understanding:** Analyse GitHub repositories and generate technical architecture documentation.
+5. **AI-Powered Improvements:** Generate code suggestions, optimized versions and validated fixes.
+6. **Continuous Monitoring:** Automatically review code changes through GitHub push webhooks.
+7. **Code Quality Tracking:** Monitor quality scores, security findings and repository health over time.
+
+---
+
+## ✨ What Can TechSpecAnalyser Do?
+
+| Feature | Description |
+|---|---|
+| 📝 Intelligent Code Review | Analyse pasted source code and uploaded files |
+| 🌐 Multi-Language Support | Analyse Python, C, C++, Java, JS, TS, HTML and CSS |
+| 🔍 Syntax Validation | Detect syntax errors before AI analysis |
+| 🐛 Bug Detection | Identify common programming mistakes and code issues |
+| 🛡️ Security Auditing | Detect vulnerabilities using CWE-mapped security rules |
+| 🔐 Secret Redaction | Mask API keys, credentials and sensitive information |
+| 📂 GitHub Repository Analysis | Inspect repository structure, branches and commits |
+| 🧠 Repository Intelligence | Generate architecture insights and project documentation |
+| 🤖 AI Code Assistant | Ask questions about your codebase |
+| ⚡ AI-Powered Code Fixes | Generate improved code with side-by-side diffs |
+| 📡 GitHub Webhook Monitoring | Trigger automated reviews after repository pushes |
+| 📊 Quality Analytics | Visualize code quality and security trends |
+| 📜 Review History | Track previous reviews and compare commits |
+| 📥 Report Export | Export findings in Markdown, JSON and CSV |
+| 🔌 Offline Analysis | Perform deterministic static analysis without Gemini |
+
+---
+
+## 🏗️ System Architecture
+
+TechSpecAnalyser combines deterministic program analysis, AI reasoning, repository integration and persistent storage into one unified workflow.
 
 ```text
-                                User / Developer
-                                      │
-               ┌──────────────────────┴──────────────────────┐
-               ▼                                             ▼
-     Streamlit Workbench                           FastAPI Webhook Service
-      (streamlit run app.py)                     (uvicorn api:app --port 8000)
-               │                                             │
-               ├──────────────────────┬──────────────────────┤
-               ▼                      ▼                      ▼
-         Paste / File          GitHub REST API        GitHub Push Webhook
-         Source Code           Tree & Commits         (HMAC Verification)
-               │                      │                      │
-               └──────────────────────┼──────────────────────┘
-                                      ▼
-                      Multi-Language Analysis Dispatcher
-      ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
-      ▼              ▼              ▼              ▼              ▼              ▼
-    Python         C / C++         Java      JS / JSX / TS       Web          Security
-   (AST/Radon)  (g++/TreeSitter) (TreeSitter)   (Lizard/AST)  (HTML/CSS)     (CWE Engine)
-      │              │              │              │              │              │
-      └──────────────┴──────────────┼──────────────┴──────────────┴──────────────┘
-                                    ▼
-                      Secret Redaction Sanitizer
-                     (Purges AWS/GH/Keys/Passwords)
-                                    ▼
-                      Google Gemini AI Reasoning
-                (gemini-2.5-flash / Configurable Model)
-                                    ▼
-                     4-Pillar Transparent Scoring
-              (30% Security + 30% Bugs + 20% MI + 20% CC)
-                                    ▼
-                      SQLite Persistence & Reports
-             (techspec.db, Plotly Trends, Markdown/JSON/CSV)
+                     👨‍💻 USER / DEVELOPER
+                              |
+               +--------------+--------------+
+               |                             |
+               ▼                             ▼
+       STREAMLIT WORKBENCH             FASTAPI SERVICE
+               |                             |
+       +-------+--------+              GITHUB WEBHOOKS
+       |       |        |                     |
+       ▼       ▼        ▼                     ▼
+     PASTE   FILE    GITHUB              PUSH EVENTS
+     CODE   UPLOAD   REPOSITORY                |
+       |       |        |                     |
+       +-------+--------+---------------------+
+                              |
+                              ▼
+                  MULTI-LANGUAGE DISPATCHER
+                              |
+          +-------------------+-------------------+
+          |         |         |         |         |
+          ▼         ▼         ▼         ▼         ▼
+        Python    C/C++     Java       JS/TS     HTML/CSS
+          |         |         |         |         |
+          +---------+---------+---------+---------+
+                              |
+                              ▼
+                    STATIC ANALYSIS ENGINE
+                              |
+                              ▼
+                   SECURITY ANALYSIS ENGINE
+                              |
+                              ▼
+                      SECRET REDACTION
+                              |
+                              ▼
+                    GOOGLE GEMINI AI
+                              |
+                              ▼
+                  4-PILLAR QUALITY SCORING
+                              |
+                              ▼
+                       SQLITE DATABASE
+                              |
+              +---------------+---------------+
+              |               |               |
+              ▼               ▼               ▼
+          DASHBOARD       REPORTS         ANALYTICS
+              |
+              ▼
+         CODE INSIGHTS
+```
+
+### 🔄 How Does It Work?
+
+1. The user submits source code, uploads files or connects a GitHub repository.
+2. The analysis dispatcher identifies the programming language.
+3. Static analyzers validate syntax and inspect code structures.
+4. The security engine checks for known vulnerability patterns.
+5. Sensitive information is redacted before AI processing.
+6. Google Gemini provides additional reasoning and improvement suggestions.
+7. The scoring engine calculates an overall code quality score.
+8. Results are stored in SQLite and displayed through the Streamlit dashboard.
+
+---
+
+## 🛡️ Security Intelligence
+
+Security is one of the most important parts of TechSpecAnalyser.
+
+The dedicated security engine identifies common vulnerability patterns and associates them with Common Weakness Enumeration (CWE) identifiers.
+
+| Vulnerability | CWE |
+|---|---|
+| Hardcoded Credentials | CWE-798 |
+| SQL Injection | CWE-89 |
+| OS Command Injection | CWE-78 |
+| Unsafe Deserialization | CWE-502 |
+| Cross-Site Scripting (XSS) | CWE-79 |
+| Path Traversal | CWE-22 |
+| Weak Cryptographic Algorithms | CWE-327 |
+| Disabled SSL Verification | CWE-295 |
+| Permissive CORS Configuration | CWE-942 |
+| Buffer Overflow Patterns | CWE-120 |
+
+### 🔐 Secret Protection
+
+Before source code is transmitted to Gemini or included in logs and exports, the security redaction layer masks detected credentials and sensitive values.
+
+The platform also supports offline-only analysis when Gemini is disabled.
+
+---
+
+## 📊 Transparent Code Quality Scoring
+
+TechSpecAnalyser uses a four-pillar scoring model to evaluate code quality.
+
+| Quality Pillar | Weight |
+|---|---:|
+| 🛡️ Security | 30% |
+| 🐛 Bugs | 30% |
+| 🧩 Maintainability Index | 20% |
+| ⚙️ Cyclomatic Complexity | 20% |
+| **Total** | **100%** |
+
+This approach combines security, correctness and maintainability instead of evaluating code using a single metric.
+
+---
+
+## 🧠 AI-Powered Repository Intelligence
+
+Why analyse individual files when you can understand an entire repository?
+
+TechSpecAnalyser connects with GitHub repositories and extracts useful technical information.
+
+- Explore repository branches and commit history.
+- Inspect directory structures and source files.
+- Analyse multiple files with fault isolation.
+- Generate technical architecture reports.
+- Understand application components and relationships.
+- Generate `PROJECT_DOCUMENTATION.md`.
+- Compare findings across different commits.
+
+---
+
+## 🤖 Your AI Codebase Assistant
+
+Imagine asking your repository:
+
+- What does this project actually do?
+- Which module handles authentication?
+- Where are the potential security risks?
+- How does the backend communicate with the frontend?
+- Which functions should be optimized?
+
+The integrated AI codebase assistant helps developers investigate their repositories through conversational questions grounded in repository context.
+
+---
+
+## 📡 Automated GitHub Monitoring
+
+TechSpecAnalyser also supports automated code reviews through GitHub push webhooks.
+
+### Workflow
+
+1. Configure a GitHub webhook.
+2. A developer pushes new code.
+3. GitHub sends a push event to the FastAPI service.
+4. The server verifies the HMAC-SHA256 signature.
+5. Changed files are retrieved and analysed.
+6. Static checks and Gemini review are performed.
+7. Results are saved in SQLite.
+8. Developers can inspect the review history and dashboard.
+
+This makes continuous code quality monitoring possible without manually starting every review.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | Streamlit 1.40+ |
+| Backend | Python 3.10+ |
+| API Framework | FastAPI, Uvicorn |
+| AI Engine | Google Gemini 2.5 Flash |
+| Code Parsing | Python AST, Tokenize, Tree-Sitter |
+| Complexity Analysis | Radon, Lizard |
+| Static Analysis | Custom Multi-Language Analyzers |
+| Security | CWE-Based Static Security Engine |
+| Database | SQLite |
+| Visualization | Plotly |
+| Repository Integration | GitHub REST API |
+| Webhook Security | HMAC-SHA256 |
+| Testing | Pytest |
+
+---
+
+## 📂 Project Structure
+
+```text
+TechSpecAnalyser/
+│
+├── app.py
+├── api.py
+├── config.py
+│
+├── core/
+│   ├── reviewer.py
+│   ├── gemini_client.py
+│   ├── review_orchestrator.py
+│   ├── repository_intelligence.py
+│   ├── scoring.py
+│   └── security_redactor.py
+│
+├── analyzers/
+│   ├── base_analyzer.py
+│   ├── python_analyzer.py
+│   ├── cpp_analyzer.py
+│   ├── java_analyzer.py
+│   ├── javascript_analyzer.py
+│   ├── typescript_analyzer.py
+│   ├── web_analyzer.py
+│   ├── static_analysis.py
+│   ├── syntax_checker.py
+│   ├── security_analyzer.py
+│   └── complexity.py
+│
+├── integrations/
+│   ├── github_client.py
+│   ├── github_fetcher.py
+│   ├── github_webhooks.py
+│   └── github_reports.py
+│
+├── assistant/
+│   ├── codebase_assistant.py
+│   └── context_builder.py
+│
+├── database/
+│   ├── db.py
+│   └── repositories.py
+│
+├── reports/
+│   ├── markdown_report.py
+│   ├── json_report.py
+│   └── export.py
+│
+├── views/
+│   ├── dashboard_view.py
+│   ├── review_view.py
+│   ├── intelligence_view.py
+│   ├── security_view.py
+│   ├── assistant_view.py
+│   ├── history_view.py
+│   ├── analytics_view.py
+│   ├── projects_view.py
+│   ├── add_repo_view.py
+│   └── settings_view.py
+│
+├── components/
+│   ├── styles.py
+│   ├── charts.py
+│   ├── finding_cards.py
+│   └── code_diff.py
+│
+├── tests/
+├── requirements.txt
+├── pytest.ini
+├── .env.example
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## 2. Core Capabilities & Workflows
+## 🚀 Getting Started
 
-### Workflow A: Individual Code Review (Pasted & File Uploads)
-- **Multi-Language Support:** Python (`.py`), C (`.c`, `.h`), C++ (`.cpp`, `.cc`, `.cxx`, `.hpp`), Java (`.java`), JavaScript (`.js`, `.mjs`, `.cjs`), JSX (`.jsx`), TypeScript (`.ts`), TSX (`.tsx`), HTML (`.html`), CSS (`.css`), and SCSS (`.scss`).
-- **Early Syntax Gate:** Halts invalid syntax before AI invocations with exact compiler or grammar line numbers.
-- **Deterministic Findings:** Flags arity mismatches, undefined variables, division by zero, empty catches, loose equality, and unclosed resources without hallucination.
-- **AI-Powered Fixes:** Syntax-validated improved code with side-by-side and unified diff viewers.
-
-### Workflow B: Real GitHub Repository Intelligence
-- Connect any public or private GitHub repository via URL or slug (`owner/repo`).
-- Inspect default branch, branch list, commit history, and directory tree.
-- Built-in safeguards: 30 files analyzed by default, 200 KB per-file limit, exclusions for `node_modules`, `.venv`, `dist`, `build`, and binary files.
-- Fault-isolated per-file processing: one corrupted or oversized file never halts the review.
-- Generates comprehensive grounded technical architecture reports and `PROJECT_DOCUMENTATION.md`.
-
-### Workflow C: Dedicated Security Audit & Secret Redaction
-- Scans for common vulnerability patterns mapped to CWE IDs:
-  - **CWE-798:** Hardcoded Credentials & API Keys
-  - **CWE-89:** SQL Injection via String Concatenation & Interpolation
-  - **CWE-78:** OS Command Injection (`os.system`, `subprocess`, `shell=True`)
-  - **CWE-502:** Unsafe Deserialization (`pickle.loads`, `yaml.load`)
-  - **CWE-79:** Cross-Site Scripting (`dangerouslySetInnerHTML`, `innerHTML`)
-  - **CWE-22:** Path Traversal Risks
-  - **CWE-327:** Broken Cryptographic Algorithms (MD5, SHA-1)
-  - **CWE-295:** Disabled SSL Certificate Validation (`verify=False`)
-  - **CWE-942:** Overly Permissive CORS (`allow_origins=["*"]`)
-  - **CWE-120:** Unbounded Buffer Overflows (`gets`, `strcpy`)
-- Automatic secret redaction: masks credentials before logging or transmitting code to Gemini.
-
-### Workflow D: GitHub Push Monitoring via Webhooks
-- Independent FastAPI webhook server (`api.py`) running on port 8000.
-- HMAC-SHA256 signature verification (`X-Hub-Signature-256`) using configured `WEBHOOK_SECRET`.
-- Duplicate delivery prevention (`X-GitHub-Delivery`).
-- Background job processing: downloads changed files, executes static checks + Gemini review, and stores results directly in SQLite.
-
-### Workflow E: Longitudinal Review Tracking & Commit Comparison
-- Tracks code quality scores, critical findings, and analysis duration over time.
-- Interactive Plotly visualizations: quality trend progression, severity donut charts, repository health radar, and issues per repository.
-- Commit comparison: identifies newly introduced vs resolved findings and score delta.
-
-### Workflow F: Offline-Only Mode
-- Full deterministic static analysis, McCabe complexity, and report generation operate 100% offline without sending any code externally when Gemini is disabled.
-
----
-
-## 3. Technology Stack
-
-- **Frontend:** Streamlit 1.40+ (Dark Developer Space Theme: `#0B1020`, Electric Blue `#4FD1E8`, Violet `#9D7BFF`)
-- **Backend:** Python 3.10+
-- **REST & Webhook Engine:** FastAPI + Uvicorn
-- **AI Reasoning:** Google Gemini API using the official `google-genai` SDK (default: `gemini-2.5-flash`)
-- **Static Analysis:** Python `ast`, `tokenize`, `compile()`, Radon, Lizard, Tree-Sitter (`tree-sitter-cpp`, `tree-sitter-java`)
-- **Data Persistence:** SQLite (`techspec.db`) with clean repository pattern
-- **Visualizations:** Plotly Express & Plotly Graph Objects
-- **Testing:** Pytest (137 automated unit and integration tests)
-
----
-
-## 4. Installation & Local Setup
-
-### Step 1: Clone and Install Dependencies
+### 1. Clone the Repository
 
 ```bash
+git clone https://github.com/YOUR_USERNAME/TechSpecAnalyser.git
+
 cd TechSpecAnalyser
+```
+
+### 2. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### Step 2: Configure Environment Variables
+### 3. Configure Environment Variables
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` to `.env` and configure:
 
-```bash
-cp .env.example .env
-```
-
-Configure the following variables in `.env`:
-
-```dotenv
-# Required for AI review and codebase chat:
-GEMINI_API_KEY=your_gemini_api_key_here
+```env
+GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
 
-# Optional: For private GitHub repos & 5,000 req/hr rate limits:
-GITHUB_TOKEN=your_github_personal_access_token_here
+GITHUB_TOKEN=your_github_token
 
-# Required for GitHub Webhooks:
-WEBHOOK_SECRET=your_secure_webhook_secret_key_here
+WEBHOOK_SECRET=your_webhook_secret
 ```
 
----
+Keep your `.env` file private. Never commit API keys or credentials to GitHub.
 
-## 5. Running the Application
+### 4. Launch the Application
 
-### 1. Launch Primary Streamlit Workbench
+Start the Streamlit workbench:
 
 ```bash
 streamlit run app.py
 ```
-Open your browser at `http://localhost:8501`.
 
-### 2. Launch Webhook & REST API Service (Optional / Automation)
+Open:
+
+```text
+http://localhost:8501
+```
+
+### 5. Launch the FastAPI Service
+
+For webhook automation:
 
 ```bash
 uvicorn api:app --host 0.0.0.0 --port 8000
 ```
-Open API docs at `http://localhost:8000/docs`.
 
-> **Note:** Both services can run concurrently. Streamlit provides the developer workbench, while FastAPI handles automated GitHub push webhooks in the background.
+API documentation:
 
----
-
-## 6. GitHub Webhook Configuration
-
-To receive automatic reviews on every commit push:
-
-1. Start the webhook server:
-   ```bash
-   uvicorn api:app --host 0.0.0.0 --port 8000
-   ```
-2. In development, expose port 8000 using a secure tunnel (e.g. `ngrok` or `smee.io`):
-   ```bash
-   ngrok http 8000
-   ```
-3. In your GitHub repository:
-   - Go to **Settings** → **Webhooks** → **Add Webhook**
-   - **Payload URL:** `https://<your-ngrok-domain>/webhooks/github`
-   - **Content type:** `application/json`
-   - **Secret:** Enter the secret configured in `WEBHOOK_SECRET`
-   - **Events:** Select **Just the push event**
-   - Click **Add Webhook**.
-4. Every push will automatically appear in your **Review History** and **Dashboard**!
+```text
+http://localhost:8000/docs
+```
 
 ---
 
-## 7. Running the Automated Test Suite
+## 🧪 Automated Testing
 
-Run the full automated test suite:
+Quality matters, especially when building a platform that analyses other people's code.
+
+TechSpecAnalyser includes **137 automated unit and integration tests**.
+
+Run the test suite:
 
 ```bash
 pytest -q
 ```
 
-All 137 tests execute with mocks and fixtures, requiring zero Gemini credits and no live network dependencies:
-- Multi-language AST, CST, and compiler syntax parsing
-- CWE security rules and secret redactions
-- 4-pillar transparent scoring engine
-- GitHub fetcher safeguards and per-file failure isolation
-- HMAC-SHA256 signature verification and push payload parsing
-- SQLite persistence, genuine metrics, and session comparison
-- Markdown, JSON, and CSV report export formats
+The tests cover:
+
+- Multi-language syntax and static analysis.
+- Security vulnerability detection.
+- Secret redaction.
+- Four-pillar scoring.
+- GitHub repository fetching safeguards.
+- Webhook signature verification.
+- SQLite persistence.
+- Review history and commit comparison.
+- Markdown, JSON and CSV report generation.
+
+The test suite uses mocks and fixtures, requiring no live Gemini API credits or network dependencies.
 
 ---
 
-## 8. Project Structure
+## 🔒 Privacy, Security & Reliability
 
-```text
-TechSpecAnalyser/
-├── app.py                      # Main Streamlit application
-├── api.py                      # FastAPI Webhook and REST API service
-├── config.py                   # Central configuration & env management
-│
-├── core/
-│   ├── reviewer.py             # Review pipeline coordinator
-│   ├── gemini_client.py        # Google GenAI client, rate limits, quota circuit breaker
-│   ├── review_orchestrator.py  # Single-file & multi-file coordination
-│   ├── repository_intelligence.py # Grounded architecture, endpoints, models & docs
-│   ├── scoring.py              # 4-pillar transparent scoring engine
-│   └── security_redactor.py    # Pattern-based secret redactor
-│
-├── analyzers/
-│   ├── base_analyzer.py        # Abstract base language adapter
-│   ├── python_analyzer.py      # Python AST, imports, arities, leaks
-│   ├── cpp_analyzer.py         # C/C++ compiler gate, leaks, tree-sitter
-│   ├── java_analyzer.py        # Java class enclosure, tree-sitter, equality
-│   ├── javascript_analyzer.py  # JS & JSX loose equality, debugger, DOM
-│   ├── typescript_analyzer.py  # TS & TSX type suppression, any type
-│   ├── web_analyzer.py         # HTML/CSS accessibility, deprecated tags
-│   ├── static_analysis.py      # Multi-language dispatch
-│   ├── syntax_checker.py       # Syntax validation across languages
-│   ├── security_analyzer.py    # Dedicated multi-language CWE security engine
-│   └── complexity.py           # Radon McCabe CC, Halstead MI, Lizard
-│
-├── integrations/
-│   ├── github_client.py        # GitHub REST API client & rate limits
-│   ├── github_fetcher.py       # Tree fetcher, size & file limits, isolation
-│   ├── github_webhooks.py      # HMAC-SHA256 verification & push parser
-│   └── github_reports.py       # PR comment & status reports
-│
-├── assistant/
-│   ├── codebase_assistant.py   # Grounded codebase AI conversational agent
-│   └── context_builder.py      # Context retriever with file & finding links
-│
-├── database/
-│   ├── db.py                   # SQLite connection manager & schema migrations
-│   └── repositories.py         # Query layer: sessions, metrics, webhooks, chats
-│
-├── reports/
-│   ├── markdown_report.py      # Markdown report exporter
-│   ├── json_report.py          # JSON export
-│   └── export.py               # Unified diff, HTML, CSV exports
-│
-├── views/
-│   ├── dashboard_view.py       # Developer space dashboard with live metrics
-│   ├── review_view.py          # Code review (Paste & Repo) with tabs & diff
-│   ├── intelligence_view.py    # Grounded architecture & generated docs
-│   ├── security_view.py        # Security centre with CWE audit & secret scanner
-│   ├── assistant_view.py       # AI assistant chat grounded in codebase
-│   ├── history_view.py         # Review history & commit comparison
-│   ├── analytics_view.py       # Longitudinal performance trends
-│   ├── projects_view.py        # Tracked GitHub repositories
-│   ├── add_repo_view.py        # Connect repository workflow
-│   └── settings_view.py        # API keys & webhook configuration
-│
-├── components/
-│   ├── styles.py               # Space-theme CSS design system
-│   ├── charts.py               # Plotly interactive graphs
-│   ├── finding_cards.py        # Actionable finding cards with AI fix buttons
-│   └── code_diff.py            # Side-by-side and unified diff renderers
-│
-├── tests/                      # 137 automated unit and integration tests
-├── requirements.txt            # Python dependencies
-├── pytest.ini                  # Pytest configuration
-├── .env.example                # Environment variable template
-├── .gitignore                  # Git ignore rules
-└── README.md                   # Full platform documentation
-```
+TechSpecAnalyser follows several important design principles:
+
+1. **Secret Protection:** Sensitive credentials are masked before logging, transmitting or exporting source code.
+2. **Offline-First Analysis:** Deterministic analysis can operate without external AI services.
+3. **No Execution of Untrusted Code:** Source code is analysed statically rather than executed.
+4. **Fault Isolation:** A problematic file does not stop the analysis of the remaining repository.
+5. **Repository Safeguards:** File-size limits and directory exclusions help control repository analysis.
 
 ---
 
-## 9. Privacy, Security & Safeguards
+## 🔮 What's Next? — Future Scope
 
-1. **Zero Secret Leaks:** All API keys, passwords, AWS tokens, and JWTs are automatically stripped via `security_redactor.py` before any data is logged, transmitted, or exported.
-2. **Offline-First:** In offline mode, no source code ever leaves the local machine.
-3. **No Execution of Untrusted Code:** TechSpecAnalyser statically parses source code via Abstract Syntax Trees; it never executes foreign code submitted for review.
-4. **Fault-Isolated:** File-level error boundaries ensure an unparsable file never halts the review of remaining modules.
+TechSpecAnalyser is designed with room for further development.
+
+Possible enhancements include:
+
+- Pull request review automation.
+- Additional programming language support.
+- Advanced vulnerability detection.
+- Dependency vulnerability analysis.
+- Deeper semantic code understanding.
+- More advanced AI-assisted refactoring.
+- Team-based code quality analytics.
+- IDE integration and real-time feedback.
+
+---
+
+## 🌟 Our Vision
+
+We believe that good software development is not just about writing code that works.
+
+It is about writing code that is secure, maintainable, understandable and reliable.
+
+Developers should spend less time searching for hidden bugs and more time building meaningful solutions.
+
+TechSpecAnalyser brings traditional software engineering techniques and modern AI reasoning together to make that possible.
+
+**Because better software starts with better understanding.**
+
+<p align="center">
+  <strong>⚡ TechSpecAnalyser</strong><br/>
+  <em>Analyse Smarter. Code Better. Build Securely.</em>
+</p>
+
+---
+
+<p align="center">
+  Built with Python, AI and a passion for better software engineering.
+</p>
